@@ -2,9 +2,7 @@ package com.sparta.post03.service;
 
 import com.sparta.post03.dto.request.CommentRequestDto;
 import com.sparta.post03.dto.request.PostRequestDto;
-import com.sparta.post03.dto.response.CommentResponseDto;
-import com.sparta.post03.dto.response.PostResponseDto;
-import com.sparta.post03.dto.response.ResponseDto;
+import com.sparta.post03.dto.response.*;
 import com.sparta.post03.entity.Comment;
 import com.sparta.post03.entity.Member;
 import com.sparta.post03.entity.Post;
@@ -14,10 +12,13 @@ import com.sparta.post03.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.swing.*;
 import java.net.ContentHandler;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -34,6 +35,11 @@ public class CommentService {
 			return null;
 		}
 		return jwtProvider.getMemberFromAuthentication();
+	}
+	//댓글이 있는지 없는지
+	public Comment isPresentComment(Long id){
+		Optional<Comment> optionalComment = commentRepository.findById(id);
+		return optionalComment.orElse(null);
 	}
 
 	public ResponseDto<?> createComment(CommentRequestDto commentRequestDto, HttpServletRequest request) {
@@ -79,6 +85,39 @@ public class CommentService {
 	}
 
 
-
-
+	//댓글 조회
+	@Transactional(readOnly = true)
+	public ResponseDto<?> getAllComment() {
+		List<CommentAllResponseDto> commentAllList = new ArrayList<>();
+		List<Comment> commentList = commentRepository.findAllByOrderByModifiedAtDesc();
+		for(Comment comment: commentList){
+			commentAllList.add(
+					CommentAllResponseDto.builder()
+							.id(comment.getId())
+							.content(comment.getContent())
+							.author(comment.getMember().getUsername())
+							.createdAt(comment.getCreatedAt())
+							.modifiedAt(comment.getModifiedAt())
+							.build()
+			);
+		}
+		return ResponseDto.success(commentAllList);
+	}
+	//댓글 상세 조회
+	@Transactional(readOnly = true)
+	public ResponseDto<?> getComment(Long postId) {
+		Comment comment = isPresentComment(postId);
+		if(null == comment){
+			return ResponseDto.fail("NOT_FOUND", "존재하지 않는 댓글 ID 입니다.");
+		}
+		return ResponseDto.success(
+				CommentResponseDto.builder()
+						.id(comment.getId())
+						.content(comment.getContent())
+						.author(comment.getMember().getUsername())
+						.createdAt(comment.getCreatedAt())
+						.modifiedAt(comment.getModifiedAt())
+						.build()
+		);
+	}
 }
