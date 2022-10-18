@@ -36,7 +36,7 @@ public class CommentService {
 		return jwtProvider.getMemberFromAuthentication();
 	}
 
-	public ResponseDto<?> creatComment(CommentRequestDto commentRequestDto, HttpServletRequest request) {
+	public ResponseDto<?> createComment(CommentRequestDto commentRequestDto, HttpServletRequest request) {
 		if(null == request.getHeader("Refresh-Token")){
 			return ResponseDto.fail("MEMBER_NOT_FOUND",
 					"로그인이 필요합니다.");
